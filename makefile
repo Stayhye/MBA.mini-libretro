@@ -269,8 +269,17 @@ else ifeq ($(platform), ps2)
    CXX = mips64r5900el-ps2-elf-g++$(EXE_EXT)
    AR = mips64r5900el-ps2-elf-ar$(EXE_EXT)
    STATIC_LINKING = 1
-   OLD_GCC = 1
-   FLAGS += -G0 -O3 -DSKIP_COLOR_CORRECTION
+   # Remove OLD_GCC = 1 since ps2dev now uses modern GCC 15+
+   FLAGS += -G0 -O3 -DSKIP_COLOR_CORRECTION \
+            -std=gnu++17 \
+            -Wno-error \
+            -Wno-template-id-cdtor \
+            -Wno-mismatched-new-delete \
+            -Wno-narrowing \
+            -Wno-return-type \
+            -I/usr/local/ps2dev/ports/include
+   LDFLAGS += -L/usr/local/ps2dev/ports/lib
+endif
    
 # Xbox 360
 else ifeq ($(platform), xenon)
