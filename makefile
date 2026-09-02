@@ -263,7 +263,7 @@ else ifeq ($(platform), psp1)
    LIBS += -lstdc++ -lpthread
 
 # PS2
-else ifeq ($(platform), ps2)
+ifeq ($(platform), ps2)
    TARGET := $(TARGET_NAME)_libretro_$(platform).a
    CC = mips64r5900el-ps2-elf-gcc$(EXE_EXT)
    CXX = mips64r5900el-ps2-elf-g++$(EXE_EXT)
