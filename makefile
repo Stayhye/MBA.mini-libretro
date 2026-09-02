@@ -263,7 +263,7 @@ else ifeq ($(platform), psp1)
    LIBS += -lstdc++ -lpthread
 
 # PS2
-ifeq ($(platform), ps2)
+else ifeq ($(platform), ps2)
    TARGET := $(TARGET_NAME)_libretro_$(platform).a
    CC = mips64r5900el-ps2-elf-gcc$(EXE_EXT)
    CXX = mips64r5900el-ps2-elf-g++$(EXE_EXT)
@@ -279,7 +279,6 @@ ifeq ($(platform), ps2)
             -Wno-return-type \
             -I/usr/local/ps2dev/ports/include
    LDFLAGS += -L/usr/local/ps2dev/ports/lib
-endif
    
 # Xbox 360
 else ifeq ($(platform), xenon)
