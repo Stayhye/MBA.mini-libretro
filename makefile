@@ -262,7 +262,16 @@ else ifeq ($(platform), psp1)
    STATIC_LINKING = 1
    LIBS += -lstdc++ -lpthread
 
-
+# PS2
+ifeq ($(platform), ps2)
+   TARGET := $(TARGET_NAME)_libretro_$(platform).a
+   CC = mips64r5900el-ps2-elf-gcc$(EXE_EXT)
+   CXX = mips64r5900el-ps2-elf-g++$(EXE_EXT)
+   AR = mips64r5900el-ps2-elf-ar$(EXE_EXT)
+   STATIC_LINKING = 1
+   OLD_GCC = 1
+   FLAGS += -G0 -O3 -DSKIP_COLOR_CORRECTION
+   
 # Xbox 360
 else ifeq ($(platform), xenon)
    TARGETLIB := $(TARGET_NAME)_libretro_xenon360.a
