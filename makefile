@@ -116,34 +116,17 @@ ifeq ($(platform), unix)
 
 # PS2
 else ifeq ($(platform), ps2)
-    TARGETLIB := $(TARGET_NAME)_libretro_$(platform).a
-    TARGETOS = ps2
-    CC = mips64r5900el-ps2-elf-gcc
-    CXX = mips64r5900el-ps2-elf-g++
-    AR = mips64r5900el-ps2-elf-ar
-    LD = mips64r5900el-ps2-elf-ar
-
-    STATIC_LINKING = 1
-    STATIC_LINKING_LINK = 1
-    ALIGNED = 1
-
-    # R5900 CPU Specific Optimizations
-    PS2_OPTFLAGS = -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math \
-                   -fsingle-precision-constant \
-                   -fno-common -fno-expensive-optimizations \
-                   -fno-exceptions
-
-    PLATCFLAGS = -DPS2 -DABGR1555 -DVIDEO_ABGR1555 -DIOAPI_NO_64 -DSKIP_COLOR_CORRECTION \
-                 -I$(PS2DEV)/ps2sdk/ports/include -I$(PS2DEV)/ps2sdk/ee/include
-
-    CONLYFLAGS += -std=gnu99
-    CPPONLYFLAGS += -std=gnu++17 -Wno-template-id-cdtor -Wno-mismatched-new-delete
-
-    CCOMFLAGS += $(PS2_OPTFLAGS) $(PLATCFLAGS) \
-                 -Wno-error -Wno-narrowing -Wno-return-type -Wno-sign-compare
-
-    LDFLAGS += -L$(PS2DEV)/ps2sdk/ports/lib -L$(PS2DEV)/ps2sdk/ee/lib
-    FRONTEND_SUPPORTS_RGB565 = 0
+   TARGET := $(TARGET_NAME)_libretro_$(platform).a
+   CC = mips64r5900el-ps2-elf-gcc
+   CXX = mips64r5900el-ps2-elf-g++
+   AR = mips64r5900el-ps2-elf-ar
+   CFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -fomit-frame-pointer -DPS2 -DABGR1555 -fno-expensive-optimizations
+   CXXFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -fomit-frame-pointer -DPS2 -DABGR1555 -fno-expensive-optimizations
+   LDFLAGS += 
+   STATIC_LINKING=1
+   STATIC_LINKING_LINK=1
+   PLATFORM_DEFINES := -DPS2 -DVIDEO_ABGR1555 -DIOAPI_NO_64
+   FRONTEND_SUPPORTS_RGB565 = 0
 
 # Default Windows / Fallback
 else
