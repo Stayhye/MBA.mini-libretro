@@ -107,18 +107,19 @@ ifeq ($(platform), unix)
 
 # PS2
 else ifeq ($(platform), ps2)
-   TARGET_NAME = mbamini
-   TARGET := $(TARGET_NAME)_libretro_$(platform).a
-   CC = mips64r5900el-ps2-elf-gcc
-   CXX = mips64r5900el-ps2-elf-g++
-   AR = mips64r5900el-ps2-elf-ar
-   CFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -fomit-frame-pointer -DPS2 -DABGR1555 -fno-expensive-optimizations
-   CXXFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -fomit-frame-pointer -DPS2 -DABGR1555 -fno-expensive-optimizations
-   LDFLAGS += 
-   STATIC_LINKING=1
-   STATIC_LINKING_LINK=1
-   PLATFORM_DEFINES := -DPS2 -DVIDEO_ABGR1555 -DIOAPI_NO_64
-   FRONTEND_SUPPORTS_RGB565 = 0
+    TARGET_NAME = mbamini
+    TARGETLIB := $(TARGET_NAME)_libretro_$(platform).a
+    CC = mips64r5900el-ps2-elf-gcc
+    CXX = mips64r5900el-ps2-elf-g++
+    AR = mips64r5900el-ps2-elf-ar
+    CFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -fomit-frame-pointer -DPS2 -DABGR1555 -fno-expensive-optimizations
+    CXXFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -fomit-frame-pointer -DPS2 -DABGR1555 -fno-expensive-optimizations
+    CPPONLYFLAGS += -std=gnu++11 -fexceptions -Wno-template-id-cdtor
+    LDFLAGS += -L$(PS2DEV)/ps2sdk/ports/lib -L$(PS2DEV)/ps2sdk/ee/lib
+    STATIC_LINKING=1
+    STATIC_LINKING_LINK=1
+    PLATFORM_DEFINES := -DPS2 -DVIDEO_ABGR1555 -DIOAPI_NO_64
+    FRONTEND_SUPPORTS_RGB565 = 0
 
 # Default Windows / Fallback
 else
