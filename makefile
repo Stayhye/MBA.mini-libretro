@@ -240,9 +240,7 @@ ifeq ($(STATIC_LINKING),1)
 $(EMULATOR): $(OBJECTS)
 	@echo Archiving PS2 Static Library (Direct Object Packing): $(TARGETLIB)
 	@$(RM) $@
-	@find $(OBJ) -name "*.o" > obj/all_objects.txt
-	@$(AR) $(ARFLAGS) $@ $$(cat obj/all_objects.txt)
-	@$(RM) obj/all_objects.txt
+	@find $(OBJ) -name "*.o" | xargs $(AR) $(ARFLAGS) $@
 else
 $(EMULATOR): $(OBJECTS)
 	@echo Linking: $(TARGETLIB)
