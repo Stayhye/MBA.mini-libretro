@@ -129,9 +129,9 @@ else ifeq ($(platform), ps2)
 
     # R5900 CPU Specific Optimizations
     PS2_OPTFLAGS = -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math \
-                   -fomit-frame-pointer -fsingle-precision-constant \
+                   -fsingle-precision-constant \
                    -fno-common -fno-expensive-optimizations \
-                   -fno-exceptions -fno-rtti
+                   -fno-exceptions
 
     PLATCFLAGS = -DPS2 -DABGR1555 -DVIDEO_ABGR1555 -DIOAPI_NO_64 -DSKIP_COLOR_CORRECTION \
                  -I$(PS2DEV)/ps2sdk/ports/include -I$(PS2DEV)/ps2sdk/ee/include
