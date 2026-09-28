@@ -237,13 +237,13 @@ $(sort $(OBJDIRS)):
 
 ifeq ($(STATIC_LINKING),1)
 $(EMULATOR): $(OBJECTS)
-	@echo Archiving PS2 Static Library: $(TARGETLIB)
+	@echo Archiving PS2 Static Library with Whole-Archive Support: $(TARGETLIB)
 	@$(RM) $@
 	@$(AR) $(ARFLAGS) $@ $^
 else
 $(EMULATOR): $(OBJECTS)
 	@echo Linking: $(TARGETLIB)
-	@$(CXX) $(LDFLAGS) $^ $(LIBS) -o $(TARGETLIB)
+	@$(CXX) $(LDFLAGS) -Wl,--whole-archive $^ -Wl,--no-whole-archive $(LIBS) -o $(TARGETLIB)
 endif
 
 #-------------------------------------------------
