@@ -199,7 +199,7 @@ endif
 
 CCOMFLAGS += -Wall -Wundef -Wformat-security -Wwrite-strings -Wno-sign-compare -Wno-conversion
 
-# Ensure intermediate target directory $(OBJ)/$(TARGET) is created alongside SUBTARGET
+# Added $(OBJ)/$(TARGET) to ensure obj/retro/mame gets created properly
 OBJDIRS = $(OBJ) $(OBJ)/$(TARGET) $(OBJ)/$(TARGET)/$(SUBTARGET)
 
 default: maketree emulator
