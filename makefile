@@ -78,7 +78,7 @@ CPPONLYFLAGS =
 LDFLAGS =
 LDFLAGSEMULATOR =
 
-TARGET_NAME ?= mba_mini
+TARGET_NAME ?= mbamini
 fpic := 
 EXE = 
 LIBS = 
