@@ -2,7 +2,7 @@
 #
 #   makefile
 #
-#   Core makefile for building MAME and derivatives
+#   Core makefile for building MAME and derivatives (PS2 Optimized)
 #
 #   Copyright (c) Nicola Salmoria and the MAME Team.
 #   Visit http://mamedev.org for licensing and usage restrictions.
@@ -26,46 +26,46 @@ NEOGEO_BIOS = 0
 UNAME = $(shell uname -a)
 
 ifeq ($(platform),)
-   platform = unix
-   system_platform = unix
-   ifeq ($(UNAME),)
-	platform = win
-	EXE_EXT = .exe
-	system_platform = win
-   else ifneq ($(findstring MINGW,$(UNAME)),)
-	platform = win
-	system_platform = win
-   else ifneq ($(findstring Darwin,$(UNAME)),)
-	platform = osx
-	system_platform = osx
-   else ifneq ($(findstring win,$(UNAME)),)
-	platform = win
-   endif
+    platform = unix
+    system_platform = unix
+    ifeq ($(UNAME),)
+     platform = win
+     EXE_EXT = .exe
+     system_platform = win
+    else ifneq ($(findstring MINGW,$(UNAME)),)
+     platform = win
+     system_platform = win
+    else ifneq ($(findstring Darwin,$(UNAME)),)
+     platform = osx
+     system_platform = osx
+    else ifneq ($(findstring win,$(UNAME)),)
+     platform = win
+    endif
 endif
 
 # Autodetect PTR64 and ENDIAN
 UNAME = $(shell uname -m)
 
 ifeq ($(firstword $(filter x86_64,$(UNAME))),x86_64)
-   PTR64 = 1
+    PTR64 = 1
 endif
 ifeq ($(firstword $(filter amd64,$(UNAME))),amd64)
-   PTR64 = 1
+    PTR64 = 1
 endif
 ifneq (,$(findstring mingw64-w64,$(PATH)))
-   PTR64 = 1
+    PTR64 = 1
 endif
 ifeq ($(firstword $(filter ppc64,$(UNAME))),ppc64)
-   PTR64 = 1
+    PTR64 = 1
 endif
 ifeq ($(firstword $(filter aarch64,$(UNAME))),aarch64)
-   PTR64 = 1
+    PTR64 = 1
 endif
 ifneq (,$(findstring Power,$(UNAME)))
-   BIGENDIAN = 1
+    BIGENDIAN = 1
 endif
 ifneq (,$(findstring ppc,$(UNAME)))
-   BIGENDIAN = 1
+    BIGENDIAN = 1
 endif
 
 # CR/LF setup: use both on win32/os2, CR only on everything else
@@ -77,19 +77,13 @@ BUILD_MIDILIB = 0
 
 #-------------------------------------------------
 # compile flags
-# CCOMFLAGS are common flags
-# CONLYFLAGS are flags only used when compiling for C
-# CPPONLYFLAGS are flags only used when compiling for C++
-# COBJFLAGS are flags only used when compiling for Objective-C(++)
 #-------------------------------------------------
 
-# start with empties for everything
 CCOMFLAGS = -DDISABLE_MIDI
 CONLYFLAGS =
 COBJFLAGS =
 CPPONLYFLAGS =
 
-# LDFLAGS are used generally; LDFLAGSEMULATOR are additional flags only used when linking the core emulator
 LDFLAGS =
 LDFLAGSEMULATOR =
 
@@ -101,316 +95,84 @@ CORE_DIR = .
 
 CCOMFLAGS += -D__LIBRETRO__
 
-# When doing 64bit build, is it optimize for local machine (hence the result might not run on different machines).
 OPTFLAG ?= 0
-
-# The default is software rendering.
 VRENDER ?= soft
 HW_RENDER ?= 0
 
-ifeq ($(VRENDER),opengl)
-	CCOMFLAGS += -DHAVE_OPENGL
-	HW_RENDER = 1
-else ifeq ($(VRENDER),gles)
-	CCOMFLAGS += -DHAVE_OPENGLES
-	HW_RENDER = 2
-endif
-
 # UNIX
 ifeq ($(platform), unix)
-   TARGETLIB := $(TARGET_NAME)_libretro.so
-   TARGETOS = linux
-   fpic = -fPIC
-   SHARED := -shared -Wl,--version-script=src/osd/retro/link.T
-ifeq ($(HW_RENDER), 1)
-   LIBS += -lGL
-else ifeq ($(HW_RENDER), 2)
-   LIBS += -lGLESv2
-endif
-   LDFLAGS += $(SHARED)
-   NATIVELD = g++
-   NATIVELDFLAGS = -Wl,--warn-common -lstdc++
-   NATIVECC = g++
-   NATIVECFLAGS = -std=gnu99
-   CC_AS = gcc
-   CC = g++
-   AR = @ar
-   LD = g++
-   PLATCFLAGS += -fno-common -fno-merge-constants -fsingle-precision-constant
-   CCOMFLAGS += $(PLATCFLAGS) -ffast-math
-   LIBS += -lstdc++ -lpthread
-   ALIGNED = 1
-
-
-# Android
-else ifeq ($(platform), android)
-   TARGETLIB := $(TARGET_NAME)_libretro_android.so
-   TARGETOS = linux
-   fpic = -fPIC
-   SHARED := -shared -Wl,--version-script=src/osd/retro/link.T
-   NATIVE = 1
-   CC_AS = @arm-linux-androideabi-gcc
-   CC = @arm-linux-androideabi-g++
-   AR = @arm-linux-androideabi-ar
-   LD = @arm-linux-androideabi-g++
-   CCOMFLAGS += -mstructure-size-boundary=32 -mthumb-interwork -fsigned-char -finline -fno-common -fno-builtin -fweb -frename-registers -falign-functions=16 -fsingle-precision-constant
-   PLATCFLAGS += -march=armv7-a -mfloat-abi=softfp -fstrict-aliasing -fno-merge-constants -DSDLMAME_NO64BITIO -DANDTIME -DRANDPATH
-   PLATCFLAGS += -DANDROID
-   LDFLAGS += -Wl,--fix-cortex-a8 -llog $(SHARED)
-   NATIVELD = g++
-   NATIVELDFLAGS = -Wl,--warn-common -lstdc++
-   NATIVECC = g++
-   NATIVECFLAGS = -std=gnu99
-   CCOMFLAGS += $(PLATCFLAGS) -ffast-math
-   LIBS += -lstdc++
-   EXTRA_RULES = 1
-   ARM_ENABLED = 1
-   ALIGNED = 1
-
-
-# OS X
-else ifeq ($(platform), osx)
-   TARGETLIB := $(TARGET_NAME)_libretro.dylib
-   TARGETOS = macosx
-   fpic = -fPIC
-   LDFLAGSEMULATOR += -stdlib=libc++
-   SHARED := -dynamiclib
-   CC = c++ -stdlib=libc++
-   LD = c++ -stdlib=libc++
-   NATIVELD = c++ -stdlib=libc++
-   NATIVECC = c++
-   LDFLAGS +=  $(SHARED)
-   CC_AS = clang
-   AR = @ar
-ifeq ($(COMMAND_MODE),"legacy")
-   ARFLAGS = -crs
-endif
-
-
-# iOS
-else ifneq (,$(findstring ios,$(platform)))
-   TARGETLIB := $(TARGET_NAME)_libretro_ios.dylib
-   TARGETOS = macosx
-   EXTRA_RULES = 1
-   ARM_ENABLED = 1
-   fpic = -fPIC
-   SHARED := -dynamiclib
-   PTR64 = 0
-ifeq ($(IOSSDK),)
-   IOSSDK := $(shell xcodebuild -version -sdk iphoneos Path)
-endif
-   CC = c++ -arch armv7 -isysroot $(IOSSDK)
-   CCOMFLAGS += -DSDLMAME_NO64BITIO -DIOS
-   CFLAGS += -DIOS
-   CXXFLAGS += -DIOS
-   NATIVELD = $(CC) -stdlib=libc++
-   LDFLAGS +=  $(SHARED)
-   LD = $(CC)
-
-
-# QNX
-else ifeq ($(platform), qnx)
-   TARGETLIB := $(TARGET_NAME)_libretro_$(platform).so
-   TARGETOS = linux
-   fpic = -fPIC
-   SHARED := -shared -Wl,--version-script=src/osd/retro/link.T
-   CC = qcc -Vgcc_ntoarmv7le
-   AR = qcc -Vgcc_ntoarmv7le
-   CFLAGS += -D__BLACKBERRY_QNX__
-   LIBS += -lstdc++ -lpthread
-
-
-# PS3
-else ifeq ($(platform), ps3)
-   TARGETLIB := $(TARGET_NAME)_libretro_$(platform).a
-   CC = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-gcc.exe
-   AR = $(CELL_SDK)/host-win32/ppu/bin/ppu-lv2-ar.exe
-   CFLAGS += -DBLARGG_BIG_ENDIAN=1 -D__ppc__
-   STATIC_LINKING = 1
-   BIGENDIAN=1
-   LIBS += -lstdc++ -lpthread
-
-
-# PS3 (SNC)
-else ifeq ($(platform), sncps3)
-   TARGETLIB := $(TARGET_NAME)_libretro_ps3.a
-   CC = $(CELL_SDK)/host-win32/sn/bin/ps3ppusnc.exe
-   AR = $(CELL_SDK)/host-win32/sn/bin/ps3snarl.exe
-   CFLAGS += -DBLARGG_BIG_ENDIAN=1 -D__ppc__
-   STATIC_LINKING = 1
-   BIGENDIAN = 1
-   LIBS += -lstdc++ -lpthread
-
-
-# Lightweight PS3 Homebrew SDK
-else ifeq ($(platform), psl1ght)
-   TARGETLIB := $(TARGET_NAME)_libretro_$(platform).a
-   CC = $(PS3DEV)/ppu/bin/ppu-gcc$(EXE_EXT)
-   AR = $(PS3DEV)/ppu/bin/ppu-ar$(EXE_EXT)
-   CFLAGS += -DBLARGG_BIG_ENDIAN=1 -D__ppc__
-   STATIC_LINKING = 1
-   BIGENDIAN = 1
-   LIBS += -lstdc++ -lpthread
-
-
-# PSP
-else ifeq ($(platform), psp1)
-   TARGETLIB := $(TARGET_NAME)_libretro_$(platform).a
-   CC = psp-g++$(EXE_EXT)
-   AR = psp-ar$(EXE_EXT)
-   CFLAGS += -DPSP -G0
-   STATIC_LINKING = 1
-   LIBS += -lstdc++ -lpthread
+    TARGETLIB := $(TARGET_NAME)_libretro.so
+    TARGETOS = linux
+    fpic = -fPIC
+    SHARED := -shared -Wl,--version-script=src/osd/retro/link.T
+    LDFLAGS += $(SHARED)
+    CC = gcc
+    CXX = g++
+    AR = ar
+    LD = g++
+    CCOMFLAGS += -fno-common -fno-merge-constants -fsingle-precision-constant -ffast-math
+    LIBS += -lstdc++ -lpthread
+    ALIGNED = 1
 
 # PS2
 else ifeq ($(platform), ps2)
-   TARGET := $(TARGET_NAME)_libretro_$(platform).a
-   CC = mips64r5900el-ps2-elf-gcc
-   CXX = mips64r5900el-ps2-elf-g++
-   AR = mips64r5900el-ps2-elf-ar
-   CFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -fomit-frame-pointer -DPS2 -DABGR1555 -fno-expensive-optimizations
-   CXXFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -fomit-frame-pointer -DPS2 -DABGR1555 -fno-expensive-optimizations
-   # Remove OLD_GCC = 1 since ps2dev now uses modern GCC 15+
-   FLAGS += -G0 -O3 -DSKIP_COLOR_CORRECTION \
-            -std=gnu++17 \
-            -Wno-error \
-            -Wno-template-id-cdtor \
-            -Wno-mismatched-new-delete \
-            -Wno-narrowing \
-            -Wno-return-type \
-            -I/usr/local/ps2dev/ports/include
-   LDFLAGS += -L/usr/local/ps2dev/ports/lib
-   STATIC_LINKING=1
-   STATIC_LINKING_LINK=1
-   PLATFORM_DEFINES := -DPS2 -DVIDEO_ABGR1555 -DIOAPI_NO_64
-   FRONTEND_SUPPORTS_RGB565 = 0
-   
-   
-# Xbox 360
-else ifeq ($(platform), xenon)
-   TARGETLIB := $(TARGET_NAME)_libretro_xenon360.a
-   CC = xenon-g++$(EXE_EXT)
-   AR = xenon-ar$(EXE_EXT)
-   CFLAGS += -D__LIBXENON__ -m32 -D__ppc__
-   STATIC_LINKING = 1
-   BIGENDIAN = 1
-   LIBS += -lstdc++ -lpthread
+    TARGETLIB := $(TARGET_NAME)_libretro_$(platform).a
+    TARGETOS = ps2
+    CC = mips64r5900el-ps2-elf-gcc
+    CXX = mips64r5900el-ps2-elf-g++
+    AR = mips64r5900el-ps2-elf-ar
+    LD = mips64r5900el-ps2-elf-ar
 
+    STATIC_LINKING = 1
+    STATIC_LINKING_LINK = 1
+    ALIGNED = 1
 
-# Nintendo Game Cube
-else ifeq ($(platform), ngc)
-   TARGETLIB := $(TARGET_NAME)_libretro_$(platform).a
-   CC = $(DEVKITPPC)/bin/powerpc-eabi-g++$(EXE_EXT)
-   AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
-   CFLAGS += -DGEKKO -DHW_DOL -mrvl -mcpu=750 -meabi -mhard-float -DBLARGG_BIG_ENDIAN=1 -D__ppc__
-   STATIC_LINKING = 1
-   BIGENDIAN = 1
-   LIBS += -lstdc++ -lpthread
+    # R5900 CPU Specific Optimizations
+    PS2_OPTFLAGS = -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math \
+                   -fomit-frame-pointer -fsingle-precision-constant \
+                   -fno-common -fno-expensive-optimizations \
+                   -fno-exceptions -fno-rtti
 
+    PLATCFLAGS = -DPS2 -DABGR1555 -DVIDEO_ABGR1555 -DIOAPI_NO_64 -DSKIP_COLOR_CORRECTION \
+                 -I$(PS2DEV)/ps2sdk/ports/include -I$(PS2DEV)/ps2sdk/ee/include
 
-# Nintendo Wii
-else ifeq ($(platform), wii)
-   TARGETLIB := $(TARGET_NAME)_libretro_$(platform).a
-   CC = $(DEVKITPPC)/bin/powerpc-eabi-g++$(EXE_EXT)
-   AR = $(DEVKITPPC)/bin/powerpc-eabi-ar$(EXE_EXT)
-   CFLAGS += -DGEKKO -DHW_RVL -mrvl -mcpu=750 -meabi -mhard-float -DBLARGG_BIG_ENDIAN=1 -D__ppc__
-   STATIC_LINKING = 1
-   BIGENDIAN = 1
-   LIBS += -lstdc++ -lpthread
+    CONLYFLAGS += -std=gnu99
+    CPPONLYFLAGS += -std=gnu++17 -Wno-template-id-cdtor -Wno-mismatched-new-delete
 
+    CCOMFLAGS += $(PS2_OPTFLAGS) $(PLATCFLAGS) \
+                 -Wno-error -Wno-narrowing -Wno-return-type -Wno-sign-compare
 
-# Raspberry Pi 2/3
-else ifneq (,$(findstring rpi,$(platform)))
-   CC = g++
-   CC_AS = gcc
-   AR = @ar
-   NATIVELD = g++
-   LD = g++
-   TARGETLIB := $(TARGET_NAME)_libretro.so
-   SHARED := -shared -Wl,--version-script=src/osd/retro/link.T
-   fpic = -fPIC
-   LDFLAGS += $(SHARED)
-   LIBS += -lstdc++ -lpthread
-   CCOMFLAGS += -marm -fomit-frame-pointer -fsingle-precision-constant -ffast-math
-   CCOMFLAGS += -fsigned-char -falign-functions=16 -fno-merge-constants
-   ARM_ENABLED = 1
-   ALIGNED = 1
-ifneq (,$(findstring rpi2, $(platform)))
-   CCOMFLAGS += -mcpu=cortex-a7 -mfpu=neon-vfpv4 -mfloat-abi=hard
-else ifneq (,$(findstring rpi3, $(platform)))
-   CCOMFLAGS += -mcpu=cortex-a53 -mfpu=neon-fp-armv8 -mfloat-abi=hard
-endif
+    LDFLAGS += -L$(PS2DEV)/ps2sdk/ports/lib -L$(PS2DEV)/ps2sdk/ee/lib
+    FRONTEND_SUPPORTS_RGB565 = 0
 
-
-# ARM
-else ifneq (,$(findstring armv,$(platform)))
-   CC = g++
-   LD = g++
-   TARGETLIB := $(TARGET_NAME)_libretro.so
-   SHARED := -shared -Wl,--version-script=src/osd/retro/link.T
-   fpic = -fPIC
-   LDFLAGS += -Wl,--fix-cortex-a8 $(SHARED)
-   LIBS += -lstdc++ -lpthread
-   CCOMFLAGS += -marm -ffast-math -mfloat-abi=hard
-   ARM_ENABLED = 1
-   ALIGNED = 1
-
-
-else ifeq ($(platform), wincross)
-   TARGETLIB := $(TARGET_NAME)_libretro.dll
-   TARGETOS = win32
-   CC ?= g++
-   LD ?= g++
-   NATIVELD = $(LD)
-   CC_AS ?= gcc
-   SHARED := -shared -static-libgcc -static-libstdc++ -s -Wl,--version-script=src/osd/retro/link.T
-   CCOMFLAGS +=-D__WIN32__ -D__WIN32_LIBRETRO__
-ifeq ($(HW_RENDER), 1)
-   LIBS += -lopengl32
-endif
-   LDFLAGS += $(SHARED)
-   EXE = .exe
-   DEFS = -DCRLF=3
-
-
-# Windows
+# Default Windows / Fallback
 else
-   TARGETLIB := $(TARGET_NAME)_libretro.dll
-   TARGETOS = win32
-   CC = g++
-   LD = g++
-   NATIVELD = $(LD)
-   CC_AS = gcc
-   SHARED := -shared -static-libgcc -static-libstdc++ -Wl,--version-script=src/osd/retro/link.T
-ifneq ($(MDEBUG),1)
-   SHARED += -s
-endif
-   CCOMFLAGS += -D__WIN32__ -D__WIN32_LIBRETRO__
-ifeq ($(HW_RENDER), 1)
-   LIBS += -lopengl32
-endif
-   LDFLAGS += $(SHARED)
-   EXE = .exe
-   DEFS = -DCRLF=3
-   DEFS += -DX64_WINDOWS_ABI
+    TARGETLIB := $(TARGET_NAME)_libretro.dll
+    TARGETOS = win32
+    CC = gcc
+    CXX = g++
+    LD = g++
+    SHARED := -shared -static-libgcc -static-libstdc++
+    LDFLAGS += $(SHARED)
+    EXE = .exe
 endif
 
 # Platform parameters finish
 
-GIT_VERSION ?= " $(shell git rev-parse --short HEAD || echo unknown)"
+GIT_VERSION ?= "$(shell git rev-parse --short HEAD || echo unknown)"
 ifneq ($(GIT_VERSION)," unknown")
-	CCOMFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
+    CCOMFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
 endif
 
 ifeq ($(ALIGNED), 1)
-	CCOMFLAGS += -DALIGN_INTS -DALIGN_SHORTS
+    CCOMFLAGS += -DALIGN_INTS -DALIGN_SHORTS
 endif
 
 CCOMFLAGS += $(fpic)
 LDFLAGS   += $(fpic)
 
 ###########################################################################
-#################   BEGIN USER-CONFIGURABLE OPTIONS   #####################
+#################    BEGIN USER-CONFIGURABLE OPTIONS    #####################
 ###########################################################################
 
 TARGET = mame
@@ -418,182 +180,56 @@ SUBTARGET = mame
 NOWERROR = 1
 OSD = retro
 CROSS_BUILD_OSD = retro
-
-#-------------------------------------------------
-# specify architecture-specific optimizations
-#-------------------------------------------------
-
-# specify optimization level or leave commented to use the default
-# (default is OPTIMIZE = 3 normally, or OPTIMIZE = 0 with symbols)
 OPTIMIZE = 3
 
-#-------------------------------------------------
-# platform-specific definitions
-#-------------------------------------------------
-
 # utilities
-MD = -mkdir$(EXE_EXT)
-RM = @rm -f
-OBJDUMP = @objdump
+MD = mkdir -p
+RM = rm -f
+OBJDUMP = objdump
 
-#-------------------------------------------------
-# form the name of the executable
-#-------------------------------------------------
-
-# reset all internal prefixes/suffixes
 SUFFIX64 =
 SUFFIXDEBUG =
 SUFFIXPROFILE =
 
-# 64-bit builds get a '64' suffix
 ifeq ($(PTR64), 1)
-   SUFFIX64 = 64
+    SUFFIX64 = 64
 endif
 
-# add an EXE suffix to get the final emulator name
-EMULATOR = $(TARGET)
+EMULATOR = $(TARGETLIB)
 
-#-------------------------------------------------
-# source and object locations
-#-------------------------------------------------
-
-# build the targets in different object dirs, so they can co-exist
 OBJ = obj/$(PREFIX)$(OSD)$(SUFFIX)$(SUFFIX64)$(SUFFIXDEBUG)$(SUFFIXPROFILE)
 
-#-------------------------------------------------
-# compile-time definitions
-#-------------------------------------------------
-# map the INLINE to something digestible by GCC
-DEFS += -DINLINE="static inline"
+DEFS += -DINLINE="static inline" -DFLAC__NO_DLL
 
-# define MSB_FIRST if we are a big-endian target
 ifeq ($(BIGENDIAN), 1)
-   DEFS += -DMSB_FIRST
+    DEFS += -DMSB_FIRST
 endif
 
-# define PTR64 if we are a 64-bit target
-ifeq ($(PTR64), 1)
-   DEFS += -DPTR64
-   ifeq ($(OPTFLAG), 1)
-	CCOMFLAGS += -march=native -mtune=native
-   endif
+# Only set default standards if not compiling for PS2
+ifneq ($(platform), ps2)
+    CONLYFLAGS += -std=gnu89
+    CPPONLYFLAGS += -x c++ -std=gnu++98
 endif
 
-# need to ensure FLAC functions are statically linked
-DEFS += -DFLAC__NO_DLL
-
-# CFLAGS is defined based on C or C++ targets
-# (remember, expansion only happens when used, so doing it here is ok)
-CFLAGS = $(CCOMFLAGS) $(CPPONLYFLAGS)
-
-# we compile C-only to C89 standard with GNU extensions
-# we compile C++ code to C++98 standard with GNU extensions
-ifeq ($(platform), osx)
-   CONLYFLAGS += -ansi
-else
-   CONLYFLAGS += -std=gnu89
-endif
-
-CPPONLYFLAGS += -x c++ -std=gnu++98
-COBJFLAGS += -x objective-c++
-
-# this speeds it up a bit by piping between the preprocessor/compiler/assembler
 CCOMFLAGS += -pipe
 
-# add the optimization flag and define MAME_DEBUG if we are a debugging build
-# PS: void assert(int expression); - If NDEBUG is defined, do nothing.
 ifeq ($(MDEBUG), 1)
-   CCOMFLAGS +=  -O0 -g -DMAME_DEBUG
+    CCOMFLAGS += -O0 -g -DMAME_DEBUG
 else
-   CCOMFLAGS += -O$(OPTIMIZE) -DNDEBUG
+    CCOMFLAGS += -O$(OPTIMIZE) -DNDEBUG
 endif
 
-# add the error warning flag
-ifndef NOWERROR
-   CCOMFLAGS += -Werror
-endif
-
-# if we are optimizing, include optimization options
 ifneq ($(OPTIMIZE), 0)
-   CCOMFLAGS += -fno-strict-aliasing $(ARCHOPTS)
+    CCOMFLAGS += -fno-strict-aliasing
 endif
 
-# add a basic set of warnings
-CCOMFLAGS += \
-	-Wall \
-	-Wundef \
-	-Wformat-security \
-	-Wwrite-strings \
-	-Wno-sign-compare \
-	-Wno-conversion 
-
-# warnings only applicable to C compiles
-CONLYFLAGS += \
-	-Wpointer-arith \
-	-Wbad-function-cast \
-	-Wstrict-prototypes
-
-# warnings only applicable to OBJ-C compiles
-COBJFLAGS += \
-	-Wpointer-arith 
-
-# warnings only applicable to C++ compiles
-CPPONLYFLAGS += \
-	-Woverloaded-virtual
-
-ifneq (,$(findstring clang,$(CC)))
-CCOMFLAGS += \
-	-Wno-cast-align \
-	-Wno-tautological-compare \
-	-Wno-constant-logical-operand \
-	-Wno-format-security \
-	-Wno-shift-count-overflow \
-	-Wno-self-assign-field
-endif
-
-ifeq ($(ARM_ENABLED), 1)
-   CFLAGS += -DARM_ENABLED
-endif
-
-ifeq ($(NEOGEO_BIOS), 1)
-   CFLAGS += -DUSE_FULLY
-endif
-
-
-#-------------------------------------------------
-# define the standard object directory; other
-# projects can add their object directories to
-# this variable
-#-------------------------------------------------
+CCOMFLAGS += -Wall -Wundef -Wformat-security -Wwrite-strings -Wno-sign-compare -Wno-conversion
 
 OBJDIRS = $(OBJ) $(OBJ)/$(TARGET)/$(SUBTARGET)
 
-#-------------------------------------------------
-# define standard libarires for CPU and sounds
-#-------------------------------------------------
-LIBEMU   = $(OBJ)/libemu.a
-LIBCPU   = $(OBJ)/libcpu.a
-LIBDASM  = $(OBJ)/libdasm.a
-LIBSOUND = $(OBJ)/libsound.a
-LIBUTIL  = $(OBJ)/libutil.a
-LIBOCORE = $(OBJ)/libocore.a
-LIBOSD   = $(OSDOBJS)
+default: maketree emulator
 
-#-------------------------------------------------
-# 'default' target needs to go here, before the
-# include files which define additional targets
-#-------------------------------------------------
-
-default: maketree buildtools emulator
-
-all: default tools
-
-tests: maketree jedutil$(EXE_EXT) chdman$(EXE_EXT)
-
-
-#-------------------------------------------------
-# defines needed by multiple make files
-#-------------------------------------------------
+all: default
 
 BUILDSRC = $(CORE_DIR)/src/build
 BUILDOBJ = $(OBJ)/build
@@ -601,7 +237,6 @@ BUILDOUT = $(BUILDOBJ)
 
 include makefile.common
 
-# combine the various definitions to one
 CCOMFLAGS += $(INCFLAGS) -fno-delete-null-pointer-checks
 CDEFS = $(DEFS)
 
@@ -611,90 +246,47 @@ CDEFS = $(DEFS)
 
 emulator: maketree $(EMULATOR)
 
-buildtools: maketree
-
-ifeq ($(NATIVE),1)
-	mkdir prec-build
-	cp -R $(OBJ)/build/* prec-build/
-	$(RM) -r $(OBJ)/osd
-	$(RM) -r $(OBJ)/lib/util
-	$(RM) -r $(OBJ)/libutil.a
-	$(RM) -r $(OBJ)/libocore.a
-endif
-
-tools: maketree $(TOOLS)
-
 maketree: $(sort $(OBJDIRS))
 
-clean: $(OSDCLEAN)
+clean:
 	@echo Deleting object tree $(OBJ)...
 	$(RM) -r obj/*
-	@echo Deleting $(EMULATOR)...
-	$(RM) $(EMULATOR)
-	@echo Deleting $(TOOLS)...
-	$(RM) $(TOOLS)
-	@echo Deleting dependencies...
-	$(RM) mba_mini_libretro.so
-	$(RM) mba_more_libretro.so
-
-checkautodetect:
-	@echo TARGETOS=$(TARGETOS)
-	@echo PTR64=$(PTR64)
-	@echo BIGENDIAN=$(BIGENDIAN)
-	@echo UNAME="$(UNAME)"
-
-tests: $(REGTESTS)
-
-
-#-------------------------------------------------
-# directory targets
-#-------------------------------------------------
+	@echo Deleting target $(TARGETLIB)...
+	$(RM) $(TARGETLIB)
 
 $(sort $(OBJDIRS)):
-	@$(MD) -p $@
-
-ifeq ($(EXTRA_RULES), 1)
-   ifeq ($(NATIVE), 0)
-      $(OBJ)/build/makedep:
-	 cp -R prec-build/makelist $(OBJ)/build
-     $(OBJ)/build/makelist:
-	 cp -R prec-build/makelist $(OBJ)/build
-   endif
-endif
-
+	@$(MD) $@
 
 #-------------------------------------------------
-# executable targets and dependencies
+# executable/archive targets
 #-------------------------------------------------
+
+ifeq ($(STATIC_LINKING),1)
+$(EMULATOR): $(OBJECTS)
+	@echo Archiving PS2 Static Library: $(TARGETLIB)
+	@$(RM) $@
+	@$(AR) $(ARFLAGS) $@ $^
+else
 $(EMULATOR): $(OBJECTS)
 	@echo Linking: $(TARGETLIB)
-	@$(LD) $(LDFLAGS) $(LDFLAGSEMULATOR) $^ $(LIBS) -o $(TARGETLIB)
+	@$(CXX) $(LDFLAGS) $^ $(LIBS) -o $(TARGETLIB)
+endif
 
 #-------------------------------------------------
-# generic rules
+# generic compilation rules
 #-------------------------------------------------
 
 $(OBJ)/%.o: $(CORE_DIR)/src/%.c | $(OSPREBUILD)
-	@$(shell echo echo Compiling:  $<)
-	@$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
+	@echo Compiling C: $<
+	@$(CC) $(CDEFS) $(CCOMFLAGS) $(CONLYFLAGS) -c $< -o $@
 
-$(OBJ)/%.o: $(OBJ)/%.c | $(OSPREBUILD)
-	@$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
+$(OBJ)/%.o: $(CORE_DIR)/src/%.cpp | $(OSPREBUILD)
+	@echo Compiling C++: $<
+	@$(CXX) $(CDEFS) $(CCOMFLAGS) $(CPPONLYFLAGS) -c $< -o $@
 
-$(OBJ)/%.pp: $(CORE_DIR)/src/%.c | $(OSPREBUILD)
-	@$(CC) $(CDEFS) $(CFLAGS) -E $< -o $@
-
-$(OBJ)/%.s: $(CORE_DIR)/src/%.c | $(OSPREBUILD)
-	@$(CC) $(CDEFS) $(CFLAGS) -S $< -o $@
+$(OBJ)/%.o: $(CORE_DIR)/src/%.cc | $(OSPREBUILD)
+	@echo Compiling C++: $<
+	@$(CXX) $(CDEFS) $(CCOMFLAGS) $(CPPONLYFLAGS) -c $< -o $@
 
 $(DRIVLISTOBJ): $(DRIVLISTSRC)
-	@$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
-
-$(DRIVLISTSRC): $(CORE_DIR)/src/$(TARGET)/$(SUBTARGET).lst $(MAKELIST_TARGET)
-	@echo Building driver list $<...
-	@$(MAKELIST) $< >$@
-
-$(OBJ)/%.a:
-	@echo Archiving: $@...
-	@$(RM) $@
-	@$(AR) $(ARFLAGS) $@ $^
+	@$(CC) $(CDEFS) $(CCOMFLAGS) $(CONLYFLAGS) -c $< -o $@
