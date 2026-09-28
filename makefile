@@ -199,7 +199,6 @@ endif
 
 CCOMFLAGS += -Wall -Wundef -Wformat-security -Wwrite-strings -Wno-sign-compare -Wno-conversion
 
-# Added $(OBJ)/$(TARGET) to ensure obj/retro/mame gets created properly
 OBJDIRS = $(OBJ) $(OBJ)/$(TARGET) $(OBJ)/$(TARGET)/$(SUBTARGET)
 
 default: maketree emulator
@@ -238,9 +237,9 @@ $(sort $(OBJDIRS)):
 
 ifeq ($(STATIC_LINKING),1)
 $(EMULATOR): $(OBJECTS)
-	@echo Archiving PS2 Static Library (Direct Object Packing): $(TARGETLIB)
+	@echo Archiving PS2 Static Library: $(TARGETLIB)
 	@$(RM) $@
-	@find $(OBJ) -name "*.o" | xargs $(AR) $(ARFLAGS) $@
+	@$(AR) $(ARFLAGS) $@ $^
 else
 $(EMULATOR): $(OBJECTS)
 	@echo Linking: $(TARGETLIB)
@@ -248,8 +247,14 @@ $(EMULATOR): $(OBJECTS)
 endif
 
 #-------------------------------------------------
-# generic compilation rules
+# generic compilation rules & sub-archive fix
 #-------------------------------------------------
+
+$(OBJ)/%.a:
+	@$(MD) $(dir $@)
+	@echo Archiving sub-library: $@
+	@$(RM) $@
+	@$(AR) $(ARFLAGS) $@ $^
 
 $(OBJ)/%.o: $(CORE_DIR)/src/%.c | $(OSPREBUILD)
 	@echo Compiling C: $<
