@@ -15,11 +15,6 @@ MDEBUG = 0
 PTR64 = 0
 BIGENDIAN = 0
 
-# ------------------------------------------------------------
-# Set the BIOS used by NEOGEO
-# NEOGEO_BIOS = 1 - Use all NEOGEO BIOS ,
-# NEOGEO_BIOS = 0 - Use part of the NEOGEO BIOS. (default)
-# ------------------------------------------------------------
 NEOGEO_BIOS = 0
 
 # system platform
@@ -43,8 +38,7 @@ ifeq ($(platform),)
     endif
 endif
 
-# Autodetect PTR64 and ENDIAN
-UNAME = $(shell uname -m)
+UNAME := $(shell uname -m)
 
 ifeq ($(firstword $(filter x86_64,$(UNAME))),x86_64)
     PTR64 = 1
@@ -68,11 +62,8 @@ ifneq (,$(findstring ppc,$(UNAME)))
     BIGENDIAN = 1
 endif
 
-# CR/LF setup: use both on win32/os2, CR only on everything else
 DEFS = -DCRLF=2 -DDISABLE_MIDI=1
-# Default to something reasonable for all platforms
 ARFLAGS = -cr
-# uncomment next line to build PortMidi as part of MAME/MESS build
 BUILD_MIDILIB = 0
 
 #-------------------------------------------------
@@ -87,7 +78,7 @@ CPPONLYFLAGS =
 LDFLAGS =
 LDFLAGSEMULATOR =
 
-TARGET_NAME := mba_mini
+TARGET_NAME ?= mba_mini
 fpic := 
 EXE = 
 LIBS = 
@@ -114,28 +105,31 @@ ifeq ($(platform), unix)
     LIBS += -lstdc++ -lpthread
     ALIGNED = 1
 
-# PS2
+# PS2 (Optimized Target)
 else ifeq ($(platform), ps2)
     TARGETLIB := $(TARGET_NAME)_libretro_$(platform).a
     TARGETOS = ps2
-    CC = mips64r5900el-ps2-elf-gcc
-    CXX = mips64r5900el-ps2-elf-g++
-    AR = mips64r5900el-ps2-elf-ar
-    LD = mips64r5900el-ps2-elf-ar
+    
+    # PS2 Toolchain Binaries
+    CC  ?= mips64r5900el-ps2-elf-gcc
+    CXX ?= mips64r5900el-ps2-elf-g++
+    AR  ?= mips64r5900el-ps2-elf-ar
+    LD  ?= mips64r5900el-ps2-elf-ar
 
     STATIC_LINKING = 1
     STATIC_LINKING_LINK = 1
     ALIGNED = 1
 
-    # R5900 CPU Specific Optimizations
+    # R5900 Hardware & Instruction Level Optimizations
     PS2_OPTFLAGS = -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math \
-                   -fsingle-precision-constant \
-                   -fno-common -fno-expensive-optimizations
+                   -fsingle-precision-constant -fno-common \
+                   -fno-expensive-optimizations -fdata-sections -ffunction-sections
 
     PLATCFLAGS = -DPS2 -DABGR1555 -DVIDEO_ABGR1555 -DIOAPI_NO_64 -DSKIP_COLOR_CORRECTION \
                  -I$(PS2DEV)/ps2sdk/ports/include -I$(PS2DEV)/ps2sdk/ee/include
 
     CONLYFLAGS += -std=gnu99
+    # Fix exception specification errors and enable C++11 mode for MAME templates
     CPPONLYFLAGS += -std=gnu++11 -fexceptions -Wno-template-id-cdtor -Wno-mismatched-new-delete
 
     CCOMFLAGS += $(PS2_OPTFLAGS) $(PLATCFLAGS) \
@@ -156,8 +150,6 @@ else
     EXE = .exe
 endif
 
-# Platform parameters finish
-
 GIT_VERSION ?= "$(shell git rev-parse --short HEAD || echo unknown)"
 ifneq ($(GIT_VERSION)," unknown")
     CCOMFLAGS += -DGIT_VERSION=\"$(GIT_VERSION)\"
@@ -171,7 +163,7 @@ CCOMFLAGS += $(fpic)
 LDFLAGS   += $(fpic)
 
 ###########################################################################
-#################    BEGIN USER-CONFIGURABLE OPTIONS    #####################
+#################     BEGIN USER-CONFIGURABLE OPTIONS     #################
 ###########################################################################
 
 TARGET = mame
@@ -181,7 +173,6 @@ OSD = retro
 CROSS_BUILD_OSD = retro
 OPTIMIZE = 3
 
-# utilities
 MD = mkdir -p
 RM = rm -f
 OBJDUMP = objdump
