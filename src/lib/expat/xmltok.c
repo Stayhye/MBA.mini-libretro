@@ -935,7 +935,7 @@ initUpdatePosition(const ENCODING *enc, const char *ptr,
 static int
 toAscii(const ENCODING *enc, const char *ptr, const char *end)
 {
-  char buf[1];
+  char buf[1] = {0};
   char *p = buf;
   XmlUtf8Convert(enc, &ptr, end, &p, p + 1);
   if (p == buf)
@@ -1604,6 +1604,12 @@ initScan(const ENCODING * const *encodingTable,
 }
 
 
+#if defined(__GNUC__) && (__GNUC__ >= 4)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#pragma GCC diagnostic ignored "-Wuninitialized"
+#endif
+
 #define NS(x) x
 #define ns(x) x
 #define XML_TOK_NS_C
@@ -1637,3 +1643,7 @@ XmlInitUnknownEncodingNS(void *mem,
 }
 
 #endif /* XML_NS */
+
+#if defined(__GNUC__) && (__GNUC__ >= 4)
+#pragma GCC diagnostic pop
+#endif
