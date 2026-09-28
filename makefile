@@ -107,6 +107,7 @@ ifeq ($(platform), unix)
 
 # PS2
 else ifeq ($(platform), ps2)
+    PTR64 = 0
     TARGET_NAME = mbamini
     TARGETLIB := $(TARGET_NAME)_libretro_$(platform).a
     CC = mips64r5900el-ps2-elf-g++
@@ -198,7 +199,8 @@ endif
 
 CCOMFLAGS += -Wall -Wundef -Wformat-security -Wwrite-strings -Wno-sign-compare -Wno-conversion
 
-OBJDIRS = $(OBJ) $(OBJ)/$(TARGET)/$(SUBTARGET)
+# Ensure intermediate target directory $(OBJ)/$(TARGET) is created alongside SUBTARGET
+OBJDIRS = $(OBJ) $(OBJ)/$(TARGET) $(OBJ)/$(TARGET)/$(SUBTARGET)
 
 default: maketree emulator
 
