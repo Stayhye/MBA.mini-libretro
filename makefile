@@ -199,8 +199,7 @@ endif
 
 CCOMFLAGS += -Wall -Wundef -Wformat-security -Wwrite-strings -Wno-sign-compare -Wno-conversion
 
-# Explicitly ensure retro directories are part of object structure
-OBJDIRS = $(OBJ) $(OBJ)/$(TARGET) $(OBJ)/$(TARGET)/$(SUBTARGET) $(OBJ)/osd/retro
+OBJDIRS = $(OBJ) $(OBJ)/$(TARGET) $(OBJ)/$(TARGET)/$(SUBTARGET)
 
 default: maketree emulator
 
@@ -214,9 +213,6 @@ include makefile.common
 
 CCOMFLAGS += $(INCFLAGS) -fno-delete-null-pointer-checks
 CDEFS = $(DEFS)
-
-# Ensure libretro.o from src/osd/retro is explicitly bundled into objects
-OBJECTS += $(OBJ)/osd/retro/libretro.o
 
 #-------------------------------------------------
 # primary targets
@@ -241,21 +237,9 @@ $(sort $(OBJDIRS)):
 
 ifeq ($(STATIC_LINKING),1)
 $(EMULATOR): $(OBJECTS)
-	@echo Creating fully flattened PS2 Static Library: $(TARGETLIB)
+	@echo Archiving PS2 Static Library with Whole-Archive Support: $(TARGETLIB)
 	@$(RM) $@
-	@TMP_DIR=$$(mktemp -d); \
-	for obj in $^; do \
-		if [[ "$$obj" == *.a ]]; then \
-			echo "Extracting sub-archive: $$obj"; \
-			(cd "$$TMP_DIR" && $(AR) x ../$$obj); \
-		elif [[ "$$obj" == *.o ]]; then \
-			cp "$$obj" "$$TMP_DIR/"; \
-		fi; \
-	done; \
-	echo "Packaging all object files into $(TARGETLIB)..."; \
-	(cd "$$TMP_DIR" && $(AR) $(ARFLAGS) ../$(TARGETLIB) *.o); \
-	rm -rf "$$TMP_DIR"
-	@echo "Done!"
+	@$(AR) $(ARFLAGS) $@ $^
 else
 $(EMULATOR): $(OBJECTS)
 	@echo Linking: $(TARGETLIB)
@@ -271,11 +255,6 @@ $(OBJ)/%.a:
 	@echo Archiving sub-library: $@
 	@$(RM) $@
 	@$(AR) $(ARFLAGS) $@ $^
-
-$(OBJ)/osd/retro/libretro.o: $(CORE_DIR)/src/osd/retro/libretro.c | $(OSPREBUILD)
-	@echo Compiling Libretro C: $<
-	@$(MD) $(dir $@)
-	@$(CC) $(CDEFS) $(CCOMFLAGS) $(CONLYFLAGS) -c $< -o $@
 
 $(OBJ)/%.o: $(CORE_DIR)/src/%.c | $(OSPREBUILD)
 	@echo Compiling C: $<
