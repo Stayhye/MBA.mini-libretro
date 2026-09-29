@@ -269,7 +269,7 @@ $(EMULATOR): $(OBJECTS)
 else
 $(EMULATOR): $(OBJECTS)
 	@echo Linking: $(TARGETLIB)
-	@$(CXX) $(LDFLAGS) -Wl,--whole-archive mbamini_libretro_ps2.a -Wl,--no-whole-archive $(LIBS) -o $(TARGETLIB)
+	@$(CXX) $(LDFLAGS) -Wl,--whole-archive ./mbamini_libretro_ps2.a -Wl,--no-whole-archive $(LIBS) -o $(TARGETLIB)
 endif
 
 #-------------------------------------------------
