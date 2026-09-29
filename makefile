@@ -237,9 +237,21 @@ $(sort $(OBJDIRS)):
 
 ifeq ($(STATIC_LINKING),1)
 $(EMULATOR): $(OBJECTS)
-	@echo Archiving PS2 Static Library with Whole-Archive Support: $(TARGETLIB)
+	@echo Creating fully flattened PS2 Static Library: $(TARGETLIB)
 	@$(RM) $@
-	@$(AR) $(ARFLAGS) $@ $^
+	@TMP_DIR=$$(mktemp -d); \
+	for obj in $^; do \
+		if [[ "$$obj" == *.a ]]; then \
+			echo "Extracting sub-archive: $$obj"; \
+			(cd "$$TMP_DIR" && $(AR) x ../$$obj); \
+		elif [[ "$$obj" == *.o ]]; then \
+			cp "$$obj" "$$TMP_DIR/"; \
+		fi; \
+	done; \
+	echo "Packaging all object files into $(TARGETLIB)..."; \
+	(cd "$$TMP_DIR" && $(AR) $(ARFLAGS) ../$(TARGETLIB) *.o); \
+	rm -rf "$$TMP_DIR"
+	@echo "Done!"
 else
 $(EMULATOR): $(OBJECTS)
 	@echo Linking: $(TARGETLIB)
