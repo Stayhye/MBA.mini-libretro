@@ -113,13 +113,12 @@ else ifeq ($(platform), ps2)
     CC = mips64r5900el-ps2-elf-g++
     CXX = mips64r5900el-ps2-elf-g++
     AR = mips64r5900el-ps2-elf-ar
-    CFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -fomit-frame-pointer -DPS2 -DABGR1555 -fno-expensive-optimizations
-    CXXFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -fomit-frame-pointer -DPS2 -DABGR1555 -fno-expensive-optimizations
+    CFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -DPS2 -DABGR1555
+    CXXFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -DPS2 -DABGR1555 
     CPPONLYFLAGS += -std=gnu++98 -x c++ -fexceptions -Wno-template-id-cdtor 
     LDFLAGS += -L$(PS2DEV)/ps2sdk/ports/lib -L$(PS2DEV)/ps2sdk/ee/lib
     STATIC_LINKING=1
-    STATIC_LINKING_LINK=1
-    PLATFORM_DEFINES := -DPS2 -DVIDEO_ABGR1555 -DIOAPI_NO_64 -x c++
+    PLATFORM_DEFINES := -DPS2 -DVIDEO_ABGR1555 -x c++
     FRONTEND_SUPPORTS_RGB565 = 0
 
 # Default Windows / Fallback
@@ -241,9 +240,21 @@ $(sort $(OBJDIRS)):
 
 ifeq ($(STATIC_LINKING),1)
 $(EMULATOR): $(OBJECTS)
-	@echo Archiving PS2 Static Library with Whole-Archive Support: $(TARGETLIB)
+	@echo Creating fully flattened PS2 Static Library: $(TARGETLIB)
 	@$(RM) $@
-	@$(AR) $(ARFLAGS) $@ $^
+	@TMP_DIR=$$(mktemp -d); \
+	for obj in $^; do \
+		if [[ "$$obj" == *.a ]]; then \
+			echo "Extracting sub-archive: $$obj"; \
+			(cd "$$TMP_DIR" && $(AR) x ../$$obj); \
+		elif [[ "$$obj" == *.o ]]; then \
+			cp "$$obj" "$$TMP_DIR/"; \
+		fi; \
+	done; \
+	echo "Packaging all object files into $(TARGETLIB)..."; \
+	(cd "$$TMP_DIR" && $(AR) $(ARFLAGS) ../$(TARGETLIB) *.o); \
+	rm -rf "$$TMP_DIR"
+	@echo "Done!"
 else
 $(EMULATOR): $(OBJECTS)
 	@echo Linking: $(TARGETLIB)
