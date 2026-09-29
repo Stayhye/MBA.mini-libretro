@@ -240,16 +240,23 @@ $(EMULATOR): $(OBJECTS)
 	@echo Creating fully flattened PS2 Static Library: $(TARGETLIB)
 	@$(RM) $@
 	@TMP_DIR=$$(mktemp -d); \
+	TARGET_ABS=$$(realpath $(TARGETLIB)); \
 	for obj in $^; do \
-		if [[ "$$obj" == *.a ]]; then \
-			echo "Extracting sub-archive: $$obj"; \
-			(cd "$$TMP_DIR" && $(AR) x ../$$obj); \
-		elif [[ "$$obj" == *.o ]]; then \
-			cp "$$obj" "$$TMP_DIR/"; \
+		if [ -f "$$obj" ]; then \
+			ABS_OBJ=$$(realpath "$$obj"); \
+			case "$$ABS_OBJ" in \
+				*.a) \
+					echo "Extracting sub-archive: $$obj"; \
+					(cd "$$TMP_DIR" && $(AR) x "$$ABS_OBJ"); \
+					;; \
+				*.o) \
+					cp "$$ABS_OBJ" "$$TMP_DIR/"; \
+					;; \
+			esac; \
 		fi; \
 	done; \
 	echo "Packaging all object files into $(TARGETLIB)..."; \
-	(cd "$$TMP_DIR" && $(AR) $(ARFLAGS) ../$(TARGETLIB) *.o); \
+	(cd "$$TMP_DIR" && $(AR) $(ARFLAGS) "$$TARGET_ABS" *.o); \
 	rm -rf "$$TMP_DIR"
 	@echo "Done!"
 else
