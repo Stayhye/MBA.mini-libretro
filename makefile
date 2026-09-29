@@ -105,19 +105,17 @@ ifeq ($(platform), unix)
     LIBS += -lstdc++ -lpthread
     ALIGNED = 1
 
-# PS2
+# PS2 (Restored to exact working compilation state)
 else ifeq ($(platform), ps2)
     PTR64 = 0
     TARGET_NAME = mbamini
     TARGETLIB := $(TARGET_NAME)_libretro_$(platform).a
-    CC = mips64r5900el-ps2-elf-gcc
+    CC = mips64r5900el-ps2-elf-g++
     CXX = mips64r5900el-ps2-elf-g++
     AR = mips64r5900el-ps2-elf-ar
-    LD = mips64r5900el-ps2-elf-g++
-    CFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -fomit-frame-pointer -DPS2 -DABGR1555
-    CXXFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -fomit-frame-pointer -DPS2 -DABGR1555
-    CCOMFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -fomit-frame-pointer -DPS2 -DABGR1555
-    CPPONLYFLAGS += -std=gnu++98 -x c++ -fexceptions -Wno-template-id-cdtor
+    CFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -fomit-frame-pointer -DPS2 -DABGR1555 -fno-expensive-optimizations
+    CXXFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -fomit-frame-pointer -DPS2 -DABGR1555 -fno-expensive-optimizations
+    CPPONLYFLAGS += -std=gnu++98 -x c++ -fexceptions -Wno-template-id-cdtor 
     LDFLAGS += -L$(PS2DEV)/ps2sdk/ports/lib -L$(PS2DEV)/ps2sdk/ee/lib
     STATIC_LINKING=1
     STATIC_LINKING_LINK=1
@@ -195,15 +193,14 @@ else
     CCOMFLAGS += -O$(OPTIMIZE) -DNDEBUG
 endif
 
-ifneq ($(platform), ps2)
 ifneq ($(OPTIMIZE), 0)
     CCOMFLAGS += -fno-strict-aliasing
-endif
 endif
 
 CCOMFLAGS += -Wall -Wundef -Wformat-security -Wwrite-strings -Wno-sign-compare -Wno-conversion
 
-OBJDIRS = $(OBJ) $(OBJ)/$(TARGET) $(OBJ)/$(TARGET)/$(SUBTARGET)
+# Ensure retro OSD object directory is explicitly included in build paths
+OBJDIRS = $(OBJ) $(OBJ)/$(TARGET) $(OBJ)/$(TARGET)/$(SUBTARGET) $(OBJ)/retro $(OBJ)/retro/mame
 
 default: maketree emulator
 
