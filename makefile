@@ -112,14 +112,14 @@ else ifeq ($(platform), ps2)
     CC = mips64r5900el-ps2-elf-g++
     CXX = mips64r5900el-ps2-elf-g++
     AR = mips64r5900el-ps2-elf-ar
-    CFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -fomit-frame-pointer -DPS2 -DABGR1555 -fno-expensive-optimizations
-    CXXFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -fomit-frame-pointer -DPS2 -DABGR1555 -fno-expensive-optimizations
+    CFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -DPS2 -DABGR1555 -Wno-register
+    CXXFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -DPS2 -DABGR1555 -Wno-register
     CPPONLYFLAGS += -std=gnu++98 -x c++ -fexceptions -Wno-template-id-cdtor 
     LDFLAGS += -L$(PS2DEV)/ps2sdk/ports/lib -L$(PS2DEV)/ps2sdk/ee/lib
     STATIC_LINKING=1
-    STATIC_LINKING_LINK=1
-    PLATFORM_DEFINES := -DPS2 -DVIDEO_ABGR1555 -DIOAPI_NO_64 -x c++
-    FRONTEND_SUPPORTS_RGB565 = 0
+    #STATIC_LINKING_LINK=1
+    #PLATFORM_DEFINES := -DPS2 -DVIDEO_ABGR1555 -DIOAPI_NO_64 -x c++
+    #FRONTEND_SUPPORTS_RGB565 = 0
     # Explicitly force libretro.o into the objects list
     OBJECTS += $(OBJ)/osd/retro/libretro.o
 
