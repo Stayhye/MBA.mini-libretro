@@ -66,6 +66,12 @@ DEFS = -DCRLF=2 -DDISABLE_MIDI=1
 ARFLAGS = -cr
 BUILD_MIDILIB = 0
 
+# Ensure retro directory structure and libretro.o are always built
+$(OBJ)/osd/retro/libretro.o: $(CORE_DIR)/src/osd/retro/libretro.c
+	@echo Compiling Libretro C: $<
+	@$(MD) $(dir $@)
+	@$(CC) $(CDEFS) $(CCOMFLAGS) $(CONLYFLAGS) -c $< -o $@
+
 #-------------------------------------------------
 # compile flags
 #-------------------------------------------------
@@ -105,7 +111,6 @@ ifeq ($(platform), unix)
     LIBS += -lstdc++ -lpthread
     ALIGNED = 1
 
-# PS2 (Exact working compilation flags preserved)
 else ifeq ($(platform), ps2)
     PTR64 = 0
     TARGET_NAME = mbamini
@@ -113,14 +118,15 @@ else ifeq ($(platform), ps2)
     CC = mips64r5900el-ps2-elf-g++
     CXX = mips64r5900el-ps2-elf-g++
     AR = mips64r5900el-ps2-elf-ar
-    CFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -DPS2 -DABGR1555 
-    CXXFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -DPS2 -DABGR1555 
+    CFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -fomit-frame-pointer -DPS2 -DABGR1555 -fno-expensive-optimizations
+    CXXFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -fomit-frame-pointer -DPS2 -DABGR1555 -fno-expensive-optimizations
     CPPONLYFLAGS += -std=gnu++98 -x c++ -fexceptions -Wno-template-id-cdtor 
     LDFLAGS += -L$(PS2DEV)/ps2sdk/ports/lib -L$(PS2DEV)/ps2sdk/ee/lib
     STATIC_LINKING=1
-    #STATIC_LINKING_LINK=1
-    #PLATFORM_DEFINES := -DPS2 -DVIDEO_ABGR1555 -x c++
+    STATIC_LINKING_LINK=1
+    PLATFORM_DEFINES := -DPS2 -DVIDEO_ABGR1555 -DIOAPI_NO_64 -x c++
     FRONTEND_SUPPORTS_RGB565 = 0
+    OBJECTS += $(OBJ)/osd/retro/libretro.o
 
 # Default Windows / Fallback
 else
