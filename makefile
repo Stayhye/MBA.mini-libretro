@@ -66,12 +66,6 @@ DEFS = -DCRLF=2 -DDISABLE_MIDI=1
 ARFLAGS = -cr
 BUILD_MIDILIB = 0
 
-# Ensure retro directory structure and libretro.o are always built
-$(OBJ)/osd/retro/libretro.o: $(CORE_DIR)/src/osd/retro/libretro.c
-	@echo Compiling Libretro C: $<
-	@$(MD) $(dir $@)
-	@$(CC) $(CDEFS) $(CCOMFLAGS) $(CONLYFLAGS) -c $< -o $@
-
 #-------------------------------------------------
 # compile flags
 #-------------------------------------------------
