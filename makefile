@@ -227,13 +227,13 @@ emulator: maketree $(EMULATOR)
 maketree: $(sort $(OBJDIRS))
 
 clean:
-    @echo Deleting object tree $(OBJ)...
-    $(RM) -r obj/*
-    @echo Deleting target $(TARGETLIB)...
-    $(RM) $(TARGETLIB)
+	@echo Deleting object tree $(OBJ)...
+	$(RM) -r obj/*
+	@echo Deleting target $(TARGETLIB)...
+	$(RM) $(TARGETLIB)
 
 $(sort $(OBJDIRS)):
-    @$(MD) $@
+	@$(MD) $@
 
 #-------------------------------------------------
 # executable/archive targets
@@ -241,13 +241,13 @@ $(sort $(OBJDIRS)):
 
 ifeq ($(STATIC_LINKING),1)
 $(EMULATOR): $(OBJECTS)
-    @echo Archiving PS2 Static Library with Whole-Archive Support: $(TARGETLIB)
-    @$(RM) $@
-    @$(AR) $(ARFLAGS) $@ $^
+	@echo Archiving PS2 Static Library with Whole-Archive Support: $(TARGETLIB)
+	@$(RM) $@
+	@$(AR) $(ARFLAGS) $@ $^
 else
 $(EMULATOR): $(OBJECTS)
-    @echo Linking: $(TARGETLIB)
-    @$(CXX) $(LDFLAGS) -Wl,--whole-archive $^ -Wl,--no-whole-archive $(LIBS) -o $(TARGETLIB)
+	@echo Linking: $(TARGETLIB)
+	@$(CXX) $(LDFLAGS) -Wl,--whole-archive $^ -Wl,--no-whole-archive $(LIBS) -o $(TARGETLIB)
 endif
 
 #-------------------------------------------------
@@ -255,22 +255,22 @@ endif
 #-------------------------------------------------
 
 $(OBJ)/%.a:
-    @$(MD) $(dir $@)
-    @echo Archiving sub-library: $@
-    @$(RM) $@
-    @$(AR) $(ARFLAGS) $@ $^
+	@$(MD) $(dir $@)
+	@echo Archiving sub-library: $@
+	@$(RM) $@
+	@$(AR) $(ARFLAGS) $@ $^
 
 $(OBJ)/%.o: $(CORE_DIR)/src/%.c | $(OSPREBUILD)
-    @echo Compiling C: $<
-    @$(CC) $(CDEFS) $(CCOMFLAGS) $(CONLYFLAGS) -c $< -o $@
+	@echo Compiling C: $<
+	@$(CC) $(CDEFS) $(CCOMFLAGS) $(CONLYFLAGS) -c $< -o $@
 
 $(OBJ)/%.o: $(CORE_DIR)/src/%.cpp | $(OSPREBUILD)
-    @echo Compiling C++: $<
-    @$(CXX) $(CDEFS) $(CCOMFLAGS) $(CPPONLYFLAGS) -c $< -o $@
+	@echo Compiling C++: $<
+	@$(CXX) $(CDEFS) $(CCOMFLAGS) $(CPPONLYFLAGS) -c $< -o $@
 
 $(OBJ)/%.o: $(CORE_DIR)/src/%.cc | $(OSPREBUILD)
-    @echo Compiling C++: $<
-    @$(CXX) $(CDEFS) $(CCOMFLAGS) $(CPPONLYFLAGS) -c $< -o $@
+	@echo Compiling C++: $<
+	@$(CXX) $(CDEFS) $(CCOMFLAGS) $(CPPONLYFLAGS) -c $< -o $@
 
 $(DRIVLISTOBJ): $(DRIVLISTSRC)
-    @$(CC) $(CDEFS) $(CCOMFLAGS) $(CONLYFLAGS) -c $< -o $@
+	@$(CC) $(CDEFS) $(CCOMFLAGS) $(CONLYFLAGS) -c $< -o $@
