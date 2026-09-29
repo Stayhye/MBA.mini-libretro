@@ -104,6 +104,7 @@ ifeq ($(platform), unix)
     CCOMFLAGS += -fno-common -fno-merge-constants -fsingle-precision-constant -ffast-math
     LIBS += -lstdc++ -lpthread
     ALIGNED = 1
+	
 #PS2
 else ifeq ($(platform), ps2)
     PTR64 = 0
@@ -120,8 +121,8 @@ else ifeq ($(platform), ps2)
     STATIC_LINKING=1
     STATIC_LINKING_LINK=1
     PLATFORM_DEFINES := -DPS2 -DVIDEO_ABGR1555 -DIOAPI_NO_64 -x c++
-    FRONTEND_SUPPORTS_RGB565 = 0
-    # Explicitly force libretro.o into the objects list
+    FRONTEND_SUPPORTS_RGB565 = 0    
+    # Append the object directly to OBJECTS so the archive packer picks it up automatically
     OBJECTS += $(OBJ)/osd/retro/libretro.o
 	
 # Default Windows / Fallback
@@ -222,7 +223,7 @@ CDEFS = $(DEFS)
 #-------------------------------------------------
 
 # Force libretro.o to build as a dependency of emulator/maketree
-emulator: maketree $(OBJ)/osd/retro/libretro.o $(EMULATOR)
+emulator: maketree $(EMULATOR)
 
 maketree: $(sort $(OBJDIRS))
 
