@@ -113,13 +113,13 @@ else ifeq ($(platform), ps2)
     CC = mips64r5900el-ps2-elf-g++
     CXX = mips64r5900el-ps2-elf-g++
     AR = mips64r5900el-ps2-elf-ar
-    CFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -DPS2 -DABGR1555 
-    CXXFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -DPS2 -DABGR1555 
+    CFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -fomit-frame-pointer -DPS2 -DABGR1555 -fno-expensive-optimizations
+    CXXFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -fomit-frame-pointer -DPS2 -DABGR1555 -fno-expensive-optimizations
     CPPONLYFLAGS += -std=gnu++98 -x c++ -fexceptions -Wno-template-id-cdtor 
     LDFLAGS += -L$(PS2DEV)/ps2sdk/ports/lib -L$(PS2DEV)/ps2sdk/ee/lib
     STATIC_LINKING=1
-    #STATIC_LINKING_LINK=1
-    #PLATFORM_DEFINES := -DPS2 -DVIDEO_ABGR1555 -x c++
+    STATIC_LINKING_LINK=1
+    PLATFORM_DEFINES := -DPS2 -DVIDEO_ABGR1555 -DIOAPI_NO_64 -x c++
     FRONTEND_SUPPORTS_RGB565 = 0
 
 # Default Windows / Fallback
@@ -199,7 +199,8 @@ endif
 
 CCOMFLAGS += -Wall -Wundef -Wformat-security -Wwrite-strings -Wno-sign-compare -Wno-conversion
 
-OBJDIRS = $(OBJ) $(OBJ)/$(TARGET) $(OBJ)/$(TARGET)/$(SUBTARGET)
+# Explicitly ensure retro directories are part of object structure
+OBJDIRS = $(OBJ) $(OBJ)/$(TARGET) $(OBJ)/$(TARGET)/$(SUBTARGET) $(OBJ)/osd/retro
 
 default: maketree emulator
 
@@ -213,6 +214,9 @@ include makefile.common
 
 CCOMFLAGS += $(INCFLAGS) -fno-delete-null-pointer-checks
 CDEFS = $(DEFS)
+
+# Ensure libretro.o from src/osd/retro is explicitly bundled into objects
+OBJECTS += $(OBJ)/osd/retro/libretro.o
 
 #-------------------------------------------------
 # primary targets
@@ -256,7 +260,15 @@ $(EMULATOR): $(OBJECTS)
 		fi; \
 	done; \
 	echo "Packaging all object files into $(TARGETLIB)..."; \
-	(cd "$$TMP_DIR" && $(AR) $(ARFLAGS) "$$TARGET_ABS" *.o); \
+	cd "$$TMP_DIR" && { \
+		OFILES=$$(find . -maxdepth 1 -name "*.o"); \
+		if [ -n "$$OFILES" ]; then \
+			$(AR) $(ARFLAGS) "$$TARGET_ABS" $$OFILES; \
+		else \
+			echo "Error: No object files found to archive!" >&2; \
+			exit 1; \
+		fi; \
+	}; \
 	rm -rf "$$TMP_DIR"
 	@echo "Done!"
 else
@@ -274,6 +286,11 @@ $(OBJ)/%.a:
 	@echo Archiving sub-library: $@
 	@$(RM) $@
 	@$(AR) $(ARFLAGS) $@ $^
+
+$(OBJ)/osd/retro/libretro.o: $(CORE_DIR)/src/osd/retro/libretro.c | $(OSPREBUILD)
+	@echo Compiling Libretro C: $<
+	@$(MD) $(dir $@)
+	@$(CC) $(CDEFS) $(CCOMFLAGS) $(CONLYFLAGS) -c $< -o $@
 
 $(OBJ)/%.o: $(CORE_DIR)/src/%.c | $(OSPREBUILD)
 	@echo Compiling C: $<
