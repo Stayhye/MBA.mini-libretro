@@ -104,7 +104,7 @@ ifeq ($(platform), unix)
     CCOMFLAGS += -fno-common -fno-merge-constants -fsingle-precision-constant -ffast-math
     LIBS += -lstdc++ -lpthread
     ALIGNED = 1
-	
+    
 #PS2
 else ifeq ($(platform), ps2)
     PTR64 = 0
@@ -122,9 +122,7 @@ else ifeq ($(platform), ps2)
     STATIC_LINKING_LINK=1
     PLATFORM_DEFINES := -DPS2 -DVIDEO_ABGR1555 -DIOAPI_NO_64 -x c++
     FRONTEND_SUPPORTS_RGB565 = 0    
-    # Append the object directly to OBJECTS so the archive packer picks it up automatically
-    OBJECTS += $(OBJ)/osd/retro/libretro.o
-	
+    
 # Default Windows / Fallback
 else
     TARGETLIB := $(TARGET_NAME)_libretro.dll
@@ -218,23 +216,25 @@ include makefile.common
 CCOMFLAGS += $(INCFLAGS) -fno-delete-null-pointer-checks
 CDEFS = $(DEFS)
 
+# CRITICAL FIX: Append libretro.o AFTER makefile.common so MAME core parsing doesn't wipe it out
+OBJECTS += $(OBJ)/osd/retro/libretro.o
+
 #-------------------------------------------------
 # primary targets
 #-------------------------------------------------
 
-# Force libretro.o to build as a dependency of emulator/maketree
 emulator: maketree $(EMULATOR)
 
 maketree: $(sort $(OBJDIRS))
 
 clean:
-	@echo Deleting object tree $(OBJ)...
-	$(RM) -r obj/*
-	@echo Deleting target $(TARGETLIB)...
-	$(RM) $(TARGETLIB)
+    @echo Deleting object tree $(OBJ)...
+    $(RM) -r obj/*
+    @echo Deleting target $(TARGETLIB)...
+    $(RM) $(TARGETLIB)
 
 $(sort $(OBJDIRS)):
-	@$(MD) $@
+    @$(MD) $@
 
 #-------------------------------------------------
 # executable/archive targets
@@ -242,67 +242,67 @@ $(sort $(OBJDIRS)):
 
 ifeq ($(STATIC_LINKING),1)
 $(EMULATOR): $(OBJECTS)
-	@echo Creating fully flattened PS2 Static Library: $(TARGETLIB)
-	@$(RM) $@
-	@TMP_DIR=$$(mktemp -d); \
-	TARGET_ABS="$(CURDIR)/$(TARGETLIB)"; \
-	for obj in $^; do \
-		if [ -f "$$obj" ]; then \
-			ABS_OBJ="$$(realpath "$$obj")"; \
-			case "$$ABS_OBJ" in \
-				*.a) \
-					echo "Extracting sub-archive: $$obj"; \
-					(cd "$$TMP_DIR" && $(AR) x "$$ABS_OBJ"); \
-					;; \
-				*.o) \
-					cp "$$ABS_OBJ" "$$TMP_DIR/"; \
-					;; \
-			esac; \
-		fi; \
-	done; \
-	echo "Packaging all object files into $(TARGETLIB)..."; \
-	cd "$$TMP_DIR" && { \
-		if ls *.o >/dev/null 2>&1; then \
-			$(AR) $(ARFLAGS) "$$TARGET_ABS" *.o; \
-		else \
-			echo "Error: No object files found to archive!" >&2; \
-			exit 1; \
-		fi; \
-	}; \
-	rm -rf "$$TMP_DIR"
-	@echo "Done!"
+    @echo Creating fully flattened PS2 Static Library: $(TARGETLIB)
+    @$(RM) $@
+    @TMP_DIR=$$(mktemp -d); \
+    TARGET_ABS="$(CURDIR)/$(TARGETLIB)"; \
+    for obj in $^; do \
+        if [ -f "$$obj" ]; then \
+            ABS_OBJ="$$(realpath "$$obj")"; \
+            case "$$ABS_OBJ" in \
+                *.a) \
+                    echo "Extracting sub-archive: $$obj"; \
+                    (cd "$$TMP_DIR" && $(AR) x "$$ABS_OBJ"); \
+                    ;; \
+                *.o) \
+                    cp "$$ABS_OBJ" "$$TMP_DIR/"; \
+                    ;; \
+            esac; \
+        fi; \
+    done; \
+    echo "Packaging all object files into $(TARGETLIB)..."; \
+    cd "$$TMP_DIR" && { \
+        if ls *.o >/dev/null 2>&1; then \
+            $(AR) $(ARFLAGS) "$$TARGET_ABS" *.o; \
+        else \
+            echo "Error: No object files found to archive!" >&2; \
+            exit 1; \
+        fi; \
+    }; \
+    rm -rf "$$TMP_DIR"
+    @echo "Done!"
 else
 $(EMULATOR): $(OBJECTS)
-	@echo Linking: $(TARGETLIB)
-	@$(CXX) $(LDFLAGS) -Wl,--whole-archive ./mbamini_libretro_ps2.a -Wl,--no-whole-archive $(LIBS) -o $(TARGETLIB)
+    @echo Linking: $(TARGETLIB)
+    @$(CXX) $(LDFLAGS) -Wl,--whole-archive ./mbamini_libretro_ps2.a -Wl,--no-whole-archive $(LIBS) -o $(TARGETLIB)
 endif
 
 #-------------------------------------------------
 # generic compilation rules & sub-archive fix
 #-------------------------------------------------
 
-# Explicit rule for libretro.o with C++ linkage or C compilation depending on file type
+# Explicit compilation rule for libretro.o
 $(OBJ)/osd/retro/libretro.o: $(CORE_DIR)/src/osd/retro/libretro.c | maketree
-	@echo Compiling Libretro C entry point: $<
-	@$(CC) $(CDEFS) $(CCOMFLAGS) $(CONLYFLAGS) -c $< -o $@
+    @echo Compiling Libretro C entry point: $<
+    @$(CC) $(CDEFS) $(CCOMFLAGS) $(CONLYFLAGS) -c $< -o $@
 
 $(OBJ)/%.a:
-	@$(MD) $(dir $@)
-	@echo Archiving sub-library: $@
-	@$(RM) $@
-	@$(AR) $(ARFLAGS) $@ $^
+    @$(MD) $(dir $@)
+    @echo Archiving sub-library: $@
+    @$(RM) $@
+    @$(AR) $(ARFLAGS) $@ $^
 
 $(OBJ)/%.o: $(CORE_DIR)/src/%.c | $(OSPREBUILD)
-	@echo Compiling C: $<
-	@$(CC) $(CDEFS) $(CCOMFLAGS) $(CONLYFLAGS) -c $< -o $@
+    @echo Compiling C: $<
+    @$(CC) $(CDEFS) $(CCOMFLAGS) $(CONLYFLAGS) -c $< -o $@
 
 $(OBJ)/%.o: $(CORE_DIR)/src/%.cpp | $(OSPREBUILD)
-	@echo Compiling C++: $<
-	@$(CXX) $(CDEFS) $(CCOMFLAGS) $(CPPONLYFLAGS) -c $< -o $@
+    @echo Compiling C++: $<
+    @$(CXX) $(CDEFS) $(CCOMFLAGS) $(CPPONLYFLAGS) -c $< -o $@
 
 $(OBJ)/%.o: $(CORE_DIR)/src/%.cc | $(OSPREBUILD)
-	@echo Compiling C++: $<
-	@$(CXX) $(CDEFS) $(CCOMFLAGS) $(CPPONLYFLAGS) -c $< -o $@
+    @echo Compiling C++: $<
+    @$(CXX) $(CDEFS) $(CCOMFLAGS) $(CPPONLYFLAGS) -c $< -o $@
 
 $(DRIVLISTOBJ): $(DRIVLISTSRC)
-	@$(CC) $(CDEFS) $(CCOMFLAGS) $(CONLYFLAGS) -c $< -o $@
+    @$(CC) $(CDEFS) $(CCOMFLAGS) $(CONLYFLAGS) -c $< -o $@
