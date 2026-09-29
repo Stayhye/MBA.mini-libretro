@@ -120,6 +120,7 @@ else ifeq ($(platform), ps2)
     STATIC_LINKING_LINK=1
     PLATFORM_DEFINES := -DPS2 -DVIDEO_ABGR1555 -DIOAPI_NO_64 -x c++
     FRONTEND_SUPPORTS_RGB565 = 0
+    # Explicitly force libretro.o into the objects list
     OBJECTS += $(OBJ)/osd/retro/libretro.o
 
 # Default Windows / Fallback
@@ -199,7 +200,8 @@ endif
 
 CCOMFLAGS += -Wall -Wundef -Wformat-security -Wwrite-strings -Wno-sign-compare -Wno-conversion
 
-OBJDIRS = $(OBJ) $(OBJ)/$(TARGET) $(OBJ)/$(TARGET)/$(SUBTARGET)
+# Ensure the osd/retro directory is part of tracked object build dirs
+OBJDIRS = $(OBJ) $(OBJ)/$(TARGET) $(OBJ)/$(TARGET)/$(SUBTARGET) $(OBJ)/osd/retro
 
 default: maketree emulator
 
@@ -218,7 +220,8 @@ CDEFS = $(DEFS)
 # primary targets
 #-------------------------------------------------
 
-emulator: maketree $(EMULATOR)
+# Force libretro.o to build as a dependency of emulator/maketree
+emulator: maketree $(OBJ)/osd/retro/libretro.o $(EMULATOR)
 
 maketree: $(sort $(OBJDIRS))
 
@@ -276,9 +279,9 @@ endif
 # generic compilation rules & sub-archive fix
 #-------------------------------------------------
 
-$(OBJ)/osd/retro/libretro.o: $(CORE_DIR)/src/osd/retro/libretro.c
-	@echo Compiling Libretro C: $<
-	@$(MD) $(dir $@)
+# Explicit rule for libretro.o with C++ linkage or C compilation depending on file type
+$(OBJ)/osd/retro/libretro.o: $(CORE_DIR)/src/osd/retro/libretro.c | maketree
+	@echo Compiling Libretro C entry point: $<
 	@$(CC) $(CDEFS) $(CCOMFLAGS) $(CONLYFLAGS) -c $< -o $@
 
 $(OBJ)/%.a:
