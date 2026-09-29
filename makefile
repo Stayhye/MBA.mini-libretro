@@ -105,7 +105,7 @@ ifeq ($(platform), unix)
     LIBS += -lstdc++ -lpthread
     ALIGNED = 1
 
-# PS2 (Restored to exact working compilation state)
+# PS2 (Exact working compilation flags preserved)
 else ifeq ($(platform), ps2)
     PTR64 = 0
     TARGET_NAME = mbamini
@@ -199,8 +199,8 @@ endif
 
 CCOMFLAGS += -Wall -Wundef -Wformat-security -Wwrite-strings -Wno-sign-compare -Wno-conversion
 
-# Ensure retro OSD object directory is explicitly included in build paths
-OBJDIRS = $(OBJ) $(OBJ)/$(TARGET) $(OBJ)/$(TARGET)/$(SUBTARGET) $(OBJ)/retro $(OBJ)/retro/mame
+# Explicitly ensure retro directories are part of object structure
+OBJDIRS = $(OBJ) $(OBJ)/$(TARGET) $(OBJ)/$(TARGET)/$(SUBTARGET) $(OBJ)/osd/retro
 
 default: maketree emulator
 
@@ -214,6 +214,9 @@ include makefile.common
 
 CCOMFLAGS += $(INCFLAGS) -fno-delete-null-pointer-checks
 CDEFS = $(DEFS)
+
+# Ensure libretro.o from src/osd/retro is explicitly bundled into objects
+OBJECTS += $(OBJ)/osd/retro/libretro.o
 
 #-------------------------------------------------
 # primary targets
@@ -256,6 +259,11 @@ $(OBJ)/%.a:
 	@echo Archiving sub-library: $@
 	@$(RM) $@
 	@$(AR) $(ARFLAGS) $@ $^
+
+$(OBJ)/osd/retro/libretro.o: $(CORE_DIR)/src/osd/retro/libretro.c | $(OSPREBUILD)
+	@echo Compiling Libretro C: $<
+	@$(MD) $(dir $@)
+	@$(CC) $(CDEFS) $(CCOMFLAGS) $(CONLYFLAGS) -c $< -o $@
 
 $(OBJ)/%.o: $(CORE_DIR)/src/%.c | $(OSPREBUILD)
 	@echo Compiling C: $<
