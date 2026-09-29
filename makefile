@@ -110,12 +110,14 @@ else ifeq ($(platform), ps2)
     PTR64 = 0
     TARGET_NAME = mbamini
     TARGETLIB := $(TARGET_NAME)_libretro_$(platform).a
-    CC = mips64r5900el-ps2-elf-g++
+    CC = mips64r5900el-ps2-elf-gcc
     CXX = mips64r5900el-ps2-elf-g++
     AR = mips64r5900el-ps2-elf-ar
-    CFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -fomit-frame-pointer -DPS2 -DABGR1555 -fno-expensive-optimizations
-    CXXFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -fomit-frame-pointer -DPS2 -DABGR1555 -fno-expensive-optimizations
-    CPPONLYFLAGS += -std=gnu++98 -x c++ -fexceptions -Wno-template-id-cdtor 
+    LD = mips64r5900el-ps2-elf-g++
+    CFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -fomit-frame-pointer -DPS2 -DABGR1555
+    CXXFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -fomit-frame-pointer -DPS2 -DABGR1555
+    CCOMFLAGS += -O3 -march=r5900 -mtune=r5900 -G0 -ffast-math -fomit-frame-pointer -DPS2 -DABGR1555
+    CPPONLYFLAGS += -std=gnu++98 -x c++ -fexceptions -Wno-template-id-cdtor
     LDFLAGS += -L$(PS2DEV)/ps2sdk/ports/lib -L$(PS2DEV)/ps2sdk/ee/lib
     STATIC_LINKING=1
     STATIC_LINKING_LINK=1
@@ -193,8 +195,10 @@ else
     CCOMFLAGS += -O$(OPTIMIZE) -DNDEBUG
 endif
 
+ifneq ($(platform), ps2)
 ifneq ($(OPTIMIZE), 0)
     CCOMFLAGS += -fno-strict-aliasing
+endif
 endif
 
 CCOMFLAGS += -Wall -Wundef -Wformat-security -Wwrite-strings -Wno-sign-compare -Wno-conversion
@@ -223,13 +227,13 @@ emulator: maketree $(EMULATOR)
 maketree: $(sort $(OBJDIRS))
 
 clean:
-	@echo Deleting object tree $(OBJ)...
-	$(RM) -r obj/*
-	@echo Deleting target $(TARGETLIB)...
-	$(RM) $(TARGETLIB)
+    @echo Deleting object tree $(OBJ)...
+    $(RM) -r obj/*
+    @echo Deleting target $(TARGETLIB)...
+    $(RM) $(TARGETLIB)
 
 $(sort $(OBJDIRS)):
-	@$(MD) $@
+    @$(MD) $@
 
 #-------------------------------------------------
 # executable/archive targets
@@ -237,13 +241,13 @@ $(sort $(OBJDIRS)):
 
 ifeq ($(STATIC_LINKING),1)
 $(EMULATOR): $(OBJECTS)
-	@echo Archiving PS2 Static Library with Whole-Archive Support: $(TARGETLIB)
-	@$(RM) $@
-	@$(AR) $(ARFLAGS) $@ $^
+    @echo Archiving PS2 Static Library with Whole-Archive Support: $(TARGETLIB)
+    @$(RM) $@
+    @$(AR) $(ARFLAGS) $@ $^
 else
 $(EMULATOR): $(OBJECTS)
-	@echo Linking: $(TARGETLIB)
-	@$(CXX) $(LDFLAGS) -Wl,--whole-archive $^ -Wl,--no-whole-archive $(LIBS) -o $(TARGETLIB)
+    @echo Linking: $(TARGETLIB)
+    @$(CXX) $(LDFLAGS) -Wl,--whole-archive $^ -Wl,--no-whole-archive $(LIBS) -o $(TARGETLIB)
 endif
 
 #-------------------------------------------------
@@ -251,22 +255,22 @@ endif
 #-------------------------------------------------
 
 $(OBJ)/%.a:
-	@$(MD) $(dir $@)
-	@echo Archiving sub-library: $@
-	@$(RM) $@
-	@$(AR) $(ARFLAGS) $@ $^
+    @$(MD) $(dir $@)
+    @echo Archiving sub-library: $@
+    @$(RM) $@
+    @$(AR) $(ARFLAGS) $@ $^
 
 $(OBJ)/%.o: $(CORE_DIR)/src/%.c | $(OSPREBUILD)
-	@echo Compiling C: $<
-	@$(CC) $(CDEFS) $(CCOMFLAGS) $(CONLYFLAGS) -c $< -o $@
+    @echo Compiling C: $<
+    @$(CC) $(CDEFS) $(CCOMFLAGS) $(CONLYFLAGS) -c $< -o $@
 
 $(OBJ)/%.o: $(CORE_DIR)/src/%.cpp | $(OSPREBUILD)
-	@echo Compiling C++: $<
-	@$(CXX) $(CDEFS) $(CCOMFLAGS) $(CPPONLYFLAGS) -c $< -o $@
+    @echo Compiling C++: $<
+    @$(CXX) $(CDEFS) $(CCOMFLAGS) $(CPPONLYFLAGS) -c $< -o $@
 
 $(OBJ)/%.o: $(CORE_DIR)/src/%.cc | $(OSPREBUILD)
-	@echo Compiling C++: $<
-	@$(CXX) $(CDEFS) $(CCOMFLAGS) $(CPPONLYFLAGS) -c $< -o $@
+    @echo Compiling C++: $<
+    @$(CXX) $(CDEFS) $(CCOMFLAGS) $(CPPONLYFLAGS) -c $< -o $@
 
 $(DRIVLISTOBJ): $(DRIVLISTSRC)
-	@$(CC) $(CDEFS) $(CCOMFLAGS) $(CONLYFLAGS) -c $< -o $@
+    @$(CC) $(CDEFS) $(CCOMFLAGS) $(CONLYFLAGS) -c $< -o $@
